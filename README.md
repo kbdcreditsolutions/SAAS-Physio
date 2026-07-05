@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PhysioCare — Clinic OS
 
-## Getting Started
+A multi-tenant SaaS platform for physiotherapy clinics. Manages patients, appointments, GST invoices, staff attendance, doctor ratings, and marketing campaigns.
 
-First, run the development server:
+**Live:** https://saas-physio.vercel.app  
+**GitHub:** https://github.com/kbdcreditsolutions/SAAS-Physio
 
+> 🤖 **AI Agents:** Read [`CONTEXT.md`](./CONTEXT.md) before making any changes.
+
+---
+
+## Quick Start (Local Dev)
+
+### 1. Clone & install
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/kbdcreditsolutions/SAAS-Physio.git
+cd SAAS-Physio
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Set up environment variables
+Create a `.env` file at the project root:
+```env
+DATABASE_URL="postgresql://neondb_owner:PASSWORD@ep-nameless-meadow-at954vlp-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_URL_UNPOOLED="postgresql://neondb_owner:PASSWORD@ep-nameless-meadow-at954vlp.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+JWT_SECRET="your-secret-here"
+```
+> Get connection strings from [Neon Console](https://console.neon.tech) → project `silent-forest-23150019`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Set up the database
+```bash
+npx prisma generate        # generate Prisma client
+npx prisma migrate deploy  # apply migrations to DB
+npm run seed               # seed demo accounts
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Run dev server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000)
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Demo Accounts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Password for all: **`Admin@123`**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Email | Role |
+|---|---|
+| `superadmin@physiocare.io` | Super Admin (all clinics) |
+| `admin@sunrisephysio.in` | Clinic Admin |
+| `dr.arjun@sunrisephysio.in` | Doctor |
+| `reception@sunrisephysio.in` | Staff |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 16** (App Router, Turbopack)
+- **TypeScript 5**, **Tailwind CSS v4**
+- **Prisma 6** + **Neon** (serverless PostgreSQL)
+- **jose** for JWT auth (Edge-compatible)
+- **bcryptjs** for password hashing
+- **Recharts** for dashboard charts
+
+---
+
+## Project Structure
+
+```
+app/
+  api/          → API routes (Node.js runtime)
+  app/          → Protected app pages (/app/*)
+  login/        → Auth page
+  page.tsx      → Landing page
+components/     → Shared UI components
+lib/
+  auth.ts       → JWT sign/verify (jose), session cookies
+  db.ts         → Prisma client singleton
+  guard.ts      → requireSession() for API routes
+  scope.ts      → Tenant scoping helper
+  nav.ts        → Role-based navigation
+middleware.ts   → Route protection (Edge runtime)
+prisma/
+  schema.prisma → Database schema
+  seed.ts       → Demo data seeder
+```
+
+---
+
+## Scripts
+
+```bash
+npm run dev     # Development server
+npm run build   # Production build
+npm run lint    # ESLint
+npm run seed    # Seed demo data
+```
