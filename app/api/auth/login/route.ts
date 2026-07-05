@@ -9,27 +9,31 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
+  try {
+    const body = await req.json();
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
+    }
+
+    const { email, password } = parsed.data;
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user || !user.isActive || !(await verifyPassword(password, user.passwordHash))) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    await setSessionCookie({
+      userId: user.id,
+      tenantId: user.tenantId,
+      role: user.role,
+      name: user.name,
+    });
+
+    return NextResponse.json({
+      user: { id: user.id, name: user.name, role: user.role, tenantId: user.tenantId },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: "Internal Server Error", details: error.message, stack: error.stack }, { status: 500 });
   }
-
-  const { email, password } = parsed.data;
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (!user || !user.isActive || !(await verifyPassword(password, user.passwordHash))) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-  }
-
-  await setSessionCookie({
-    userId: user.id,
-    tenantId: user.tenantId,
-    role: user.role,
-    name: user.name,
-  });
-
-  return NextResponse.json({
-    user: { id: user.id, name: user.name, role: user.role, tenantId: user.tenantId },
-  });
 }
