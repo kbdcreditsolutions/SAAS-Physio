@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #14231b;
+  --forest: #1f4d3a;
+  --forest-deep: #123024;
+  --forest-light: #2f6b50;
+  --cream: #f6f3ea;
+  --sand: #eae4d4;
+  --clay: #c1653f;
+  --clay-light: #f0d9cd;
+  --sage: #7d9483;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-light: var(--forest-light);
+  --color-cream: var(--cream);
+  --color-sand: var(--sand);
+  --color-clay: var(--clay);
+  --color-clay-light: var(--clay-light);
+  --color-sage: var(--sage);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-data: var(--font-data);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), serif;
+}
+
+.font-data {
+  font-family: var(--font-data), monospace;
+}
+
+/* Signature: hand-drawn EKG pulse motif, draws in once on load */
+.pulse-draw {
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+  animation: pulse-draw 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s forwards;
+}
+
+@keyframes pulse-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }
