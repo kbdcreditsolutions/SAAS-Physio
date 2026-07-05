@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth";
 
-export const runtime = "nodejs";
-
 const COOKIE_NAME = "physiocare_session";
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value;
-  const session = token ? verifySession(token) : null;
+  const session = token ? await verifySession(token) : null;
   const { pathname } = req.nextUrl;
 
   const isAppRoute = pathname.startsWith("/app");

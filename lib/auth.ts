@@ -1,8 +1,8 @@
-import jwt from "jsonwebtoken";
+import * as jose from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default_secret");
 const COOKIE_NAME = "physiocare_session";
 
 export type Role = "SUPER_ADMIN" | "CLINIC_ADMIN" | "DOCTOR" | "STAFF";
@@ -22,20 +22,25 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
-export function signSession(payload: SessionPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+export async function signSession(payload: SessionPayload) {
+  return await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(JWT_SECRET);
 }
 
-export function verifySession(token: string): SessionPayload | null {
+export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as SessionPayload;
+    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+    return payload as SessionPayload;
   } catch {
     return null;
   }
 }
 
 export async function setSessionCookie(payload: SessionPayload) {
-  const token = signSession(payload);
+  const token = await signSession(payload);
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
@@ -55,5 +60,5 @@ export async function getSession(): Promise<SessionPayload | null> {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifySession(token);
+  return await verifySession(token);
 }
