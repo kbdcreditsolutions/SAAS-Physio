@@ -102,7 +102,7 @@ export default function DashboardPage() {
                   tickLine={false}
                 />
                 <YAxis tick={{ fontSize: 11, fill: "var(--sage)" }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => inr(v)} />
+                <Tooltip formatter={(v) => inr(Number(v))} />
                 <Line type="monotone" dataKey="revenue" stroke="var(--forest)" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 <CartesianGrid stroke="var(--sand)" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--sage)" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "var(--sage)" }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => inr(v)} />
+                <Tooltip formatter={(v) => inr(Number(v))} />
                 <Bar dataKey="revenue" fill="var(--forest)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
