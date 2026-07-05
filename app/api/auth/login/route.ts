@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       user: { id: user.id, name: user.name, role: user.role, tenantId: user.tenantId },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: "Internal Server Error", details: error.message, stack: error.stack }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[POST /api/auth/login]", message);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

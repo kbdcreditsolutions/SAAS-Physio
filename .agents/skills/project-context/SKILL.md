@@ -5,20 +5,53 @@ description: Context and best practices specific to the SAAS-Physio Next.js work
 
 # SAAS-Physio Project Context
 
-This skill serves as the self-learning brain for the SAAS-Physio project. As you solve bugs, uncover architectural nuances, or learn about deployment environments, document them here.
+This is the self-learning brain for the SAAS-Physio project. Updated as new issues are resolved.
 
 ## 1. Next.js Edge Runtime vs Node.js
-- The middleware in this project (`middleware.ts`) runs on the Next.js Edge Runtime when deployed to Vercel.
-- **NEVER** use `export const runtime = "nodejs";` in `middleware.ts`. Next.js App Router enforces Edge for middleware.
-- **NEVER** import or use Node.js specific libraries (like `crypto`, `fs`, `jsonwebtoken`) in `middleware.ts` or any code that the middleware imports.
-- **Authentication:** Use `jose` instead of `jsonwebtoken` for signing and verifying JWTs on the edge.
+- `middleware.ts` runs on the **Edge Runtime** in Vercel — NEVER use Node.js-only libraries here.
+- **NEVER** add `export const runtime = "nodejs";` in `middleware.ts`.
+- **NEVER** import `jsonwebtoken`, `crypto`, `fs`, or any Node.js native module in `middleware.ts` or files it imports.
+- **Use `jose`** (Edge-compatible) instead of `jsonwebtoken` for JWT signing/verification.
+- `verifySession()` in `lib/auth.ts` is now `async` — always `await` it.
 
 ## 2. Authentication Flow
-- Handled via cookies (`physiocare_session`) using `jose` for JWTs.
-- Server Actions and API routes (which run in Node.js runtime) can access Prisma.
-- Client components should not access `jsonwebtoken` or Node.js logic.
+- Session stored in `physiocare_session` httpOnly cookie.
+- JWTs signed/verified using `jose` with `HS256` algorithm.
+- `lib/auth.ts` exports: `signSession`, `verifySession`, `setSessionCookie`, `clearSessionCookie`, `getSession`.
+- API routes use `requireSession()` from `lib/guard.ts` for auth checks.
+- Password hashing uses `bcryptjs` (Node.js compatible, not used in Edge).
 
-## 3. Deployment (Vercel)
-- Vercel deployments will fail silently at runtime (500 Internal Server Error) if Edge functions crash due to Node.js library imports. Always check Edge compatibility when adding imports to shared libs (like `lib/auth.ts`) that might be consumed by middleware.
+## 3. Database — Neon PostgreSQL via Prisma
+- **Provider:** Neon (serverless PostgreSQL), integrated directly with Vercel.
+- **Neon Project:** `silent-forest-23150019` (neon-cinereous-lens), org `org-blue-poetry-93504632`.
+- **Endpoint:** `ep-nameless-meadow-at954vlp.c-9.us-east-1.aws.neon.tech`
+- Neon uses PgBouncer connection pooling. Prisma requires BOTH:
+  - `DATABASE_URL` → **pooled** URL (`-pooler.` in hostname) — for app runtime
+  - `DATABASE_URL_UNPOOLED` → **direct** URL (no `-pooler.`) — for migrations via `directUrl` in schema.prisma
+- schema.prisma must have:
+  ```prisma
+  datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DATABASE_URL_UNPOOLED")
+  }
+  ```
 
-*(Self-learning: Append new architectural rules and debugging patterns to this skill file as the project evolves.)*
+## 4. Vercel Environment Variables Required
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Neon **pooled** connection string (auto-injected by Neon integration) |
+| `DATABASE_URL_UNPOOLED` | Neon **direct** connection string (auto-injected by Neon integration) |
+| `JWT_SECRET` | Random hex string — generate with `openssl rand -hex 32` |
+
+## 5. Demo Accounts (password: `Admin@123`)
+| Email | Role |
+|---|---|
+| `superadmin@physiocare.io` | SUPER_ADMIN |
+| `admin@sunrisephysio.in` | CLINIC_ADMIN |
+| `dr.arjun@sunrisephysio.in` | DOCTOR |
+| `reception@sunrisephysio.in` | STAFF |
+
+## 6. Deployment History / Bug Log
+- **2026-07-06:** Fixed login 500 error caused by `jsonwebtoken` (Node.js only) being imported into `middleware.ts` (Edge runtime). Replaced with `jose`. Also removed invalid `export const runtime = "nodejs"` from middleware. Added `directUrl` for Neon PgBouncer compatibility. Seeded Neon DB with demo data.
+
